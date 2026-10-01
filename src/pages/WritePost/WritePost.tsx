@@ -9,6 +9,7 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
+  Info,
   GripHorizontal
 } from "lucide-react";
 import BlogPreview from "./blogPreview";
@@ -23,6 +24,7 @@ interface CreateBlogData {
   slug: string;
   title: string;
   description: string;
+  content?: string;
   html_content: string;
   thumbnail_image: File | null;
   meta_title: string;
@@ -35,6 +37,7 @@ const WritePost: React.FC = () => {
     slug: "",
     title: "",
     description: "",
+    content: "",
     html_content: "",
     thumbnail_image: null,
     meta_title: "",
@@ -45,7 +48,7 @@ const WritePost: React.FC = () => {
   const [keywordInput, setKeywordInput] = useState("");
   const [showSEO, setShowSEO] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [status, setStatus] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
 
   // Position state for the draggable floating settings panel
   const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
@@ -142,15 +145,40 @@ const WritePost: React.FC = () => {
     setStatus(null);
 
     try {
-      const response = await createBlog(formData);
+      const response = await createBlog({
+        ...formData,
+        content: formData.content || formData.html_content
+      });
       console.log("Blog creation response:", response);
-      setStatus({ type: "success", message: "Your blog post was successfully published!" });
+
+      const resData = response?.data;
+      if (
+        resData?.detail &&
+        (resData?.error ||
+          resData.detail.toLowerCase().includes("already exists") ||
+          resData.detail.toLowerCase().includes("error"))
+      ) {
+        setStatus({
+          type: "error",
+          message: resData.detail
+        });
+        return;
+      }
+
+      const successMsg =
+        resData?.message ||
+        (typeof resData?.detail === "string"
+          ? resData.detail
+          : "Your blog post was successfully published!");
+
+      setStatus({ type: "success", message: successMsg });
 
       // Reset form upon success
       setFormData({
         slug: "",
         title: "",
         description: "",
+        content: "",
         html_content: "",
         thumbnail_image: null,
         meta_title: "",
@@ -159,9 +187,35 @@ const WritePost: React.FC = () => {
       });
     } catch (err: any) {
       console.error("Error creating blog:", err);
+      let errorMsg = "An error occurred while publishing the blog.";
+
+      if (err.response?.data) {
+        const data = err.response.data;
+        if (typeof data.detail === "string") {
+          errorMsg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          // FastAPI 422 validation errors array
+          errorMsg = data.detail
+            .map((item: any) => {
+              if (typeof item === "string") return item;
+              const field = item.loc ? item.loc[item.loc.length - 1] : "";
+              return field ? `${field}: ${item.msg}` : item.msg || JSON.stringify(item);
+            })
+            .join(", ");
+        } else if (data.message) {
+          errorMsg = data.message;
+        } else if (typeof data === "string") {
+          errorMsg = data;
+        }
+      } else if (err.detail) {
+        errorMsg = err.detail;
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
       setStatus({
         type: "error",
-        message: err.detail || "An error occurred while publishing the blog."
+        message: errorMsg
       });
     } finally {
       setLoading(false);
@@ -194,34 +248,72 @@ const WritePost: React.FC = () => {
 
           {/* Success/Error Alerts */}
           {status && (
-            <div className={`p-4 rounded-xl border flex items-start gap-3 transition-all duration-300 ${status.type === "success"
-                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                : "bg-rose-55 border-rose-200 text-rose-800"
-              }`}>
+            <div
+              className={`p-4 rounded-xl border flex items-start gap-3 transition-all duration-300 shadow-sm ${
+                status.type === "success"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                  : status.type === "info"
+                  ? "bg-sky-50 border-sky-200 text-sky-800"
+                  : "bg-rose-50 border-rose-200 text-rose-800"
+              }`}
+            >
               {status.type === "success" ? (
-                <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" />
+              ) : status.type === "info" ? (
+                <Info className="w-5 h-5 shrink-0 mt-0.5 text-sky-600" />
               ) : (
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-600" />
               )}
-              <div>
-                <h4 className="text-sm font-semibold">{status.type === "success" ? "Success!" : "Error"}</h4>
-                <p className="text-xs mt-1 opacity-90">{status.message}</p>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-semibold">
+                  {status.type === "success" ? "Success!" : status.type === "info" ? "Note" : "Error"}
+                </h4>
+                <p className="text-xs mt-1 opacity-90 break-words leading-relaxed">{status.message}</p>
               </div>
+              <button
+                type="button"
+                onClick={() => setStatus(null)}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 -mr-1 -mt-1"
+                aria-label="Dismiss message"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
 
           {/* Title & Slug inputs */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold  uppercase tracking-wider">URL Slug</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold uppercase tracking-wider">URL Slug</label>
+                {formData.title.trim() && !formData.slug && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, slug: generateSlug(prev.title) }))}
+                    className="text-[11px] text-orange-600 hover:text-orange-700 font-medium hover:underline"
+                  >
+                    Generate from title
+                  </button>
+                )}
+              </div>
               <Input
                 type="text"
                 name="slug"
                 value={formData.slug}
                 onChange={handleSlugChange}
                 placeholder="url-friendly-slug"
-                className="bg-white border-slate-200 text-black placeholder-slate-400 focus-visible:border-orange-500 focus-visible:ring-orange-500/20 h-10 px-3.5 font-mono text-sm"
+                className={`bg-white text-black placeholder-slate-400 focus-visible:ring-2 h-10 px-3.5 font-mono text-sm transition-colors ${
+                  status?.type === "error" && status.message.toLowerCase().includes("slug")
+                    ? "border-rose-500 focus-visible:border-rose-500 focus-visible:ring-rose-500/20"
+                    : "border-slate-200 focus-visible:border-orange-500 focus-visible:ring-orange-500/20"
+                }`}
               />
+              {status?.type === "error" && status.message.toLowerCase().includes("slug") && (
+                <p className="text-xs text-rose-600 font-medium flex items-center gap-1.5 pt-0.5">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{status.message}</span>
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -394,6 +486,41 @@ const WritePost: React.FC = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Status Message in Settings Panel */}
+                {status && (
+                  <div
+                    className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs transition-all duration-200 shadow-sm ${
+                      status.type === "success"
+                        ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                        : status.type === "info"
+                        ? "bg-sky-50 border-sky-200 text-sky-800"
+                        : "bg-rose-50 border-rose-200 text-rose-800"
+                    }`}
+                  >
+                    {status.type === "success" ? (
+                      <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+                    ) : status.type === "info" ? (
+                      <Info className="w-4 h-4 shrink-0 mt-0.5 text-sky-600" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="font-semibold block mb-0.5">
+                        {status.type === "success" ? "Success!" : status.type === "info" ? "Note" : "Error"}
+                      </span>
+                      <p className="leading-snug break-words opacity-90">{status.message}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStatus(null)}
+                      className="text-slate-400 hover:text-slate-600 p-0.5 transition-colors"
+                      aria-label="Dismiss message"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
 
                 {/* Publish CTA Button */}
                 <Button

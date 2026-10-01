@@ -13,14 +13,30 @@ import parse from "html-react-parser";
 interface BlogPreviewProps {
   htmlContent: string;
 }
-
 const BlogPreview: React.FC<BlogPreviewProps> = ({ htmlContent }) => {
+  const isFullDoc = /<!DOCTYPE\s+html|<html[\s>]|<head[\s>]|<body[\s>]/i.test(htmlContent || "");
+
   return (
     <div className="space-y-6">
       {/* Rendered HTML preview */}
-      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm prose prose-sm max-w-none">
-        {parse(htmlContent || "<p>Preview will appear here…</p>")}
-      </div>
+      {isFullDoc ? (
+        <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+          <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 text-xs text-slate-500 font-mono flex items-center justify-between">
+            <span>Full HTML Document Preview</span>
+            <span className="text-[10px] bg-slate-200 px-2 py-0.5 rounded text-slate-700">Sandbox Iframe</span>
+          </div>
+          <iframe
+            srcDoc={htmlContent}
+            title="Blog Preview"
+            className="w-full min-h-[450px] border-0 bg-white"
+            sandbox="allow-same-origin allow-popups"
+          />
+        </div>
+      ) : (
+        <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm prose prose-sm max-w-none">
+          {parse(htmlContent || "<p>Preview will appear here…</p>")}
+        </div>
+      )}
 
       {/* Raw HTML content box */}
       <div className="space-y-2">

@@ -4,24 +4,31 @@ import { Upload, X } from "lucide-react";
 interface ThumbnailImageProps {
   value: File | null;
   onChange: (file: File | null) => void;
+  existingUrl?: string;
+  onRemoveExisting?: () => void;
 }
 
-export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ value, onChange }) => {
+export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({
+  value,
+  onChange,
+  existingUrl,
+  onRemoveExisting,
+}) => {
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
   useEffect(() => {
-    if (!value) {
+    if (value) {
+      const objectUrl = URL.createObjectURL(value);
+      setPreview(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl);
+    } else if (existingUrl) {
+      setPreview(existingUrl);
+    } else {
       setPreview(null);
-      return;
     }
-    const objectUrl = URL.createObjectURL(value);
-    setPreview(objectUrl);
-
-    // Free memory when this component is unmounted or value changes
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [value]);
+  }, [value, existingUrl]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -52,6 +59,7 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({ value, onChange 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange(null);
+    onRemoveExisting?.();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
