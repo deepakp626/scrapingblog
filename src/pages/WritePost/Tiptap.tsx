@@ -1,7 +1,7 @@
 // src/Tiptap.tsx
-import { useState, ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { useEditor, EditorContent, Editor, useEditorState } from '@tiptap/react'
-import { FloatingMenu, BubbleMenu as TiptapBubbleMenu } from '@tiptap/react/menus'
+import {  BubbleMenu as TiptapBubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Highlight from '@tiptap/extension-highlight'
 import Link from "@tiptap/extension-link";
@@ -52,28 +52,18 @@ const Tiptap = ({ content, onChange }: { content?: string, onChange?: (value: st
           <>
               {/* Toolbar */}
     <div
-        className="
-        sticky
-        top-0
-        z-50
-        bg-white
-        border-b
-        p-2
-        flex
-        flex-wrap
-        gap-2
-        "
+        className="top-0 z-50 sticky flex flex-wrap gap-2 bg-white p-2 border-b"
     >
         <ToolBar editor={editor} />
     </div>
           
-           <BubbleMenu editor={editor}> </BubbleMenu> 
+           <BubbleMenu editor={editor} /> 
           </>
         )
       }
 
       {/* ya editor content important hai esma editot object pass kiya hai */}
-      <EditorContent className="text-black h-40 mt-5" editor={editor} />
+      <EditorContent className="mt-5 h-40 text-black" editor={editor} />
 
 
 
@@ -115,7 +105,8 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
     }
   })
 
-  const handleHeadingChange = (value: string) => {
+  const handleHeadingChange = (value: string | null) => {
+    if (!value) return;
     if (value === "paragraph") {
       editor.chain().focus().setParagraph().run();
     } else {
@@ -133,7 +124,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
   return (
     <>
 
-      <div className="sticky top-0 z-30 flex flex-wrap items-center gap-1.5 " >
+      <div className="top-0 z-30 sticky flex flex-wrap items-center gap-1.5" >
         
         <Select
           onValueChange={handleHeadingChange}
@@ -175,7 +166,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           onPressedChange={() => editor.chain().focus().toggleBold().run()}
           pressed={editorState.isBold}
         >
-          <BoldIcon className="h-4 w-4" />
+          <BoldIcon className="w-4 h-4" />
 
         </Toggle>
 
@@ -186,7 +177,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           pressed={editorState.isItalic}
           onPressedChange={() => editor.chain().focus().toggleItalic().run()}
         >
-          <ItalicIcon className="h-4 w-4" />
+          <ItalicIcon className="w-4 h-4" />
 
         </Toggle>
 
@@ -197,7 +188,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           pressed={editorState.isUnderline}
           onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
         >
-          <UnderlineIcon className="h-4 w-4" />
+          <UnderlineIcon className="w-4 h-4" />
 
         </Toggle>
 
@@ -207,7 +198,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           aria-label="Toggle strikethrough"
           pressed={editorState.isStrike}
           onPressedChange={() => editor.chain().focus().toggleStrike().run()}
-        >  <StrikethroughIcon className="h-4 w-4" />
+        >  <StrikethroughIcon className="w-4 h-4" />
 
         </Toggle>
 
@@ -221,7 +212,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           }
           aria-label="Toggle highlight"
         >
-          <HighlighterIcon className="h-4 w-4" />
+          <HighlighterIcon className="w-4 h-4" />
         </Toggle>
 
 
@@ -232,7 +223,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           onPressedChange={(() => editor.chain().focus().toggleCode().run())}
           aria-label="Toggle code"
         >
-          <CodeIcon className="h-4 w-4" />
+          <CodeIcon className="w-4 h-4" />
         </Toggle>
 
         <Toggle
@@ -241,7 +232,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           pressed={editorState.isBulletList}
           onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
           aria-label="Toggle bullet list" >
-          <ListIcon className="h-4 w-4" />
+          <ListIcon className="w-4 h-4" />
         </Toggle>
 
         <Toggle
@@ -250,7 +241,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           pressed={editorState.isOrderedList}
           onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
           aria-label="Toggle ordered list">
-          <ListOrderedIcon className="h-4 w-4" />
+          <ListOrderedIcon className="w-4 h-4" />
         </Toggle>
 
         <Toggle
@@ -259,7 +250,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           pressed={editorState.isBlockquote}
           onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
           aria-label="Toggle blockquote">
-          <Quote className="h-4 w-4" />
+          <Quote className="w-4 h-4" />
         </Toggle>
 
 
@@ -268,11 +259,11 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           variant='outline'
           onPressedChange={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()}
           aria-label="Toggle link">
-          <UnlinkIcon className="h-4 w-4" />
+          <UnlinkIcon className="w-4 h-4" />
         </Toggle >
         ) : (<LinkComponent editor={editor}>
           <Toggle size="sm" aria-label="Toggle link">
-            <LinkIcon className="h-4 w-4" />
+            <LinkIcon className="w-4 h-4" />
           </Toggle>
         </LinkComponent>
         )}
@@ -284,7 +275,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editorState.canUndo}
           aria-label="Undo" >
-          <UndoIcon className="h-4 w-4" />
+          <UndoIcon className="w-4 h-4" />
         </Button >
 
 
@@ -295,7 +286,7 @@ const ToolBar = ({ editor }: { editor: Editor }) => {
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editorState.canRedo}
           aria-label="Redo" >
-          <RedoIcon className="h-4 w-4" />
+          <RedoIcon className="w-4 h-4" />
         </Button >
 
 
@@ -338,7 +329,7 @@ function LinkComponent({ editor, children, }: { editor: Editor; children: ReactN
       <PopoverTrigger>{children}</PopoverTrigger>
       {/* // this is the main */}
       {/* trigger point */}
-      <PopoverContent className="w-80 p-4">
+      <PopoverContent className="p-4 w-80">
         <div className="flex flex-col gap-4">
           <h3 className="font-medium">Insert Link</h3>
           <Input
@@ -398,7 +389,7 @@ const BubbleMenu = ({editor}: {editor: Editor}) => {
           onPressedChange={() => editor.chain().focus().toggleBold().run()}
           pressed={editorState.isBold}
         >
-          <BoldIcon className="h-4 w-4" />
+          <BoldIcon className="w-4 h-4" />
 
         </Toggle>
 
@@ -409,7 +400,7 @@ const BubbleMenu = ({editor}: {editor: Editor}) => {
           pressed={editorState.isItalic}
           onPressedChange={() => editor.chain().focus().toggleItalic().run()}
         >
-          <ItalicIcon className="h-4 w-4" />
+          <ItalicIcon className="w-4 h-4" />
 
         </Toggle>
 
@@ -420,7 +411,7 @@ const BubbleMenu = ({editor}: {editor: Editor}) => {
           pressed={editorState.isUnderline}
           onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
         >
-          <UnderlineIcon className="h-4 w-4" />
+          <UnderlineIcon className="w-4 h-4" />
 
         </Toggle>
 
@@ -430,7 +421,7 @@ const BubbleMenu = ({editor}: {editor: Editor}) => {
           aria-label="Toggle strikethrough"
           pressed={editorState.isStrike}
           onPressedChange={() => editor.chain().focus().toggleStrike().run()}
-        >  <StrikethroughIcon className="h-4 w-4" />
+        >  <StrikethroughIcon className="w-4 h-4" />
 
         </Toggle>
 
@@ -444,7 +435,7 @@ const BubbleMenu = ({editor}: {editor: Editor}) => {
           }
           aria-label="Toggle highlight"
         >
-          <HighlighterIcon className="h-4 w-4" />
+          <HighlighterIcon className="w-4 h-4" />
         </Toggle>
 
 
@@ -455,7 +446,7 @@ const BubbleMenu = ({editor}: {editor: Editor}) => {
           onPressedChange={(() => editor.chain().focus().toggleCode().run())}
           aria-label="Toggle code"
         >
-          <CodeIcon className="h-4 w-4" />
+          <CodeIcon className="w-4 h-4" />
         </Toggle>
 
         <Toggle
@@ -464,7 +455,7 @@ const BubbleMenu = ({editor}: {editor: Editor}) => {
           pressed={editorState.isBulletList}
           onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
           aria-label="Toggle bullet list" >
-          <ListIcon className="h-4 w-4" />
+          <ListIcon className="w-4 h-4" />
         </Toggle>
 
         <Toggle
@@ -473,7 +464,7 @@ const BubbleMenu = ({editor}: {editor: Editor}) => {
           pressed={editorState.isOrderedList}
           onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
           aria-label="Toggle ordered list">
-          <ListOrderedIcon className="h-4 w-4" />
+          <ListOrderedIcon className="w-4 h-4" />
         </Toggle>
 
         <Toggle
@@ -482,7 +473,7 @@ const BubbleMenu = ({editor}: {editor: Editor}) => {
           pressed={editorState.isBlockquote}
           onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
           aria-label="Toggle blockquote">
-          <Quote className="h-4 w-4" />
+          <Quote className="w-4 h-4" />
         </Toggle>
 
 
@@ -491,11 +482,11 @@ const BubbleMenu = ({editor}: {editor: Editor}) => {
           variant='outline'
           onPressedChange={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()}
           aria-label="Toggle link">
-          <UnlinkIcon className="h-4 w-4" />
+          <UnlinkIcon className="w-4 h-4" />
         </Toggle >
         ) : (<LinkComponent editor={editor}>
           <Toggle size="sm" aria-label="Toggle link">
-            <LinkIcon className="h-4 w-4" />
+            <LinkIcon className="w-4 h-4" />
           </Toggle>
         </LinkComponent>
         )}

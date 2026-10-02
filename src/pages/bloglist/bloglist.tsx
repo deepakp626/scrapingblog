@@ -194,10 +194,8 @@ const BlogList: React.FC = () => {
 
                   <div className="top-3 right-3 z-20 absolute">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="flex justify-center items-center bg-white/90 hover:bg-gray-100 shadow rounded-full w-9 h-9">
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
+                      <DropdownMenuTrigger className="flex justify-center items-center bg-white/90 hover:bg-gray-100 shadow rounded-full w-9 h-9">
+                        <MoreVertical className="w-5 h-5" />
                       </DropdownMenuTrigger>
 
                       <DropdownMenuContent align="end" className="w-40">
